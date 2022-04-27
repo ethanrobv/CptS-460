@@ -1,0 +1,10 @@
+Assume the CPU executes kgetc() in main();
+Draw a diagram to show the control flow of the CPU when a KBD key is pressed.
+    
+    [starting from kgetc() in main, in loop awaiting key press]
+    => kbd button pressed
+    => [vector table.0x18]      WHY? (this is the index in the table which corresponds to software irq handler)
+    => irq_handler:             WHY? (we have been directed here from the vector table)
+    => IRQ_chandler()           WHY? (invoked from irq_handler:)
+    => kbd_handler()            WHY? (vicstatus indicates interrupt was a kbd input)
+    => (collapses back to kgetc() in main, where IRQ interrupts get masked out)

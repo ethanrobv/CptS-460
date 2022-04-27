@@ -1,0 +1,41 @@
+3.1: Device must be allowed to generate interrupts, where and how did we enable timers to generate interrupts?
+    We used the following code to enable timers to generate interrupts: 
+        *(tp->base+TCNTL) |= 0x80;    // set enable bit 7
+    This sets the enable bit 7, allowing the timer to generate interrupts.
+    We can observe that clearing this enable bit stops the timer (i.e., prevents it from generating interrupts).
+
+
+3.2 Device interrupts must be routed to IRQ input pin of CPU, where and how did we route timer interrupts to CPU?
+    We use the following code to enable routing of timer interrupts:
+        *(VIC_BASE + VIC_INTENABLE) |= (1<<4);  // timer0,1 at bit4 
+    This sets the PIC bits 4 (and 5 for timers 2 and 3) to 1, which unmasks the signals
+    of the respective timers and allows it to be routed to CPU.
+
+
+3.3 Device must be enabled to operate:
+    A) Where and how did we enable timer 0?
+        We enable timer 0 here: if (i==0) tp->base = (u32 *)0x101E2000; 
+        This is a base address for 1 of the dual timer controllers in the architecture we're working in.
+        Setting the base address of timer 0 to this value "enables" it.
+    B) What would happen if we did NOT enable timer 0?
+        If we comment out this line the program starts but never gets interrupt signals from the timer.
+
+
+3.4 CPU must have IRQ unmasked (CPSR.I_bit = 1 mask out IRQ):
+    A) Where and how did we let CPU run with IRQ unmasked?
+        We execute this instruction: MSR cpsr, #0x13        // back to SVC mode with I-bit=0: unmask IRQ
+        after switching to IRQ mode and setting up IRQ stack pointer. This switches back to SVC mode with
+        IRQ interrupts ENBALED.
+    B) What happens if we MSR cpsr, #0x93 then call main()?
+        Similarly to question 3.3, if we do not enable IRQ interrupts then the program starts
+        but will never get interrupt signals from our timer(s).
+
+3.5 Must have an interrupt handler installed to handle timer interrupts:
+    A) What does copy_vectors() do? Why?
+        copy_vectors() copies the vector table is ts.s to address 0x0. We do this
+        because this is where the ARM based system expects it to be upon starting.
+
+    B) CPU is executing in a while(1); loop. Show the control flow of CPU when a timer interrupt occurs:
+        while(1) => vectorTable.0x18 => irq_handler() => IRQ_chandler() => 
+            timer_handler() => timer_clearInterrupt() => 
+            [stack collapses from here back to where irq_handler() was called] => back to interrupt point

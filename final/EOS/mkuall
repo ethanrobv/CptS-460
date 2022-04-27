@@ -1,0 +1,9 @@
+cd USER
+sudo ./mku init
+sudo ./mku login
+sudo ./mku sh
+sudo ./mku ls
+sudo ./mku cat
+
+cd ..
+sudo ./mk

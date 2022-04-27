@@ -1,0 +1,92 @@
+Q1: trace syscall control flow:
+    Assume Process P1 executed    int pid = ukfork();
+
+1. int ukfork()
+   {
+     return syscall(5,0,0,0);
+   }
+
+[ukfork()] -> [calls syscall() IN us.s] -> 
+
+2. syscall:
+       stmfd sp!, {lr}
+       swi #0
+       ldmfd sp!, {pc}
+
+[swi instruction in us.s ISSUES INTERRUPT AND SETS PC TO 0x8 IN VECTOR TABLE] -> 
+3. vector_table:
+   0C: LDR PC svc_handler_addr
+
+   svc_handler_addr .word  svc_entry
+4. svc_entry:
+      stmfd sp!, {r0-r12, lr} 
+      save Umode usp, upc,cpsr in PROC
+
+   bl svc_handler ==> where did CPU go? Name the function and what does it do? 
+
+[svc_handler_addr] -> [svc_entry] -> [calls svc_handler() IN svc.c] -> 
+[WE PASSED IN 5 AS ARG] -> [call kfork()] -> KERNEL -> fork.c -> kfork() ->
+
+5. goUmode:
+      restore saved usp, cpsr from PROC
+      ensure r = kfork() as return value pid = ukfork() in Umode;
+      ldmfd sp!, {r0-r12, pc}^
+
+[IN kfork() call goUmode()] ->
+[GO TO SYS MODE IN ORDER TO GO BACK TO UMODE] ->
+[FIRST RESTORE user sp and cpsr] ->
+[THEN GO BACK TO user mode]
+
+-------------------------------------------------------------------------
+
+Q2:
+At 4: WHY do we have to save Umode usp, upc, cpsr in PROC?
+	We save these variables in PROC because a PROC may become suspended in 
+	the kernel, thus we need a way to return to Umode and restore it's 
+	environment variables.
+
+At 5: How did the value r = kfork() in Kmode returned to Umode?
+	It returned to Umode by executing goUmode() which first restores Umode 
+	sp and cpsr from the saved values within PROC. Then the following 
+	instruction:
+		ldmfd sp!, {r0-r12, pc}^ 
+	returns it to umode.
+2. int kfork()
+   {
+       PROC *p = newProc;
+   
+2-1. To make P first resume from Kmode, then immediately goUmode to its VA(0),
+     p's kstack MUST contain 2 frames:
+
+    High: 
+   	syscall frame: what's the return address to Umode?
+                  what will be the parameter(s) to Umode code?
+   
+			return addr = VA(0) beginning of umode image
+			parameter(s) = parameters will be contents of kstack which are corresponding to command line arguments 
+		  
+   	tswitch frame: what's the resume address?
+                  Where is the Kmode return value when p resumes running?
+    
+			resume addr = goUmode:
+			kmode return value is in the kstack
+    LOW
+   	saved ksp of p = entry -28 in kstack
+	
+2-2. After resuming from Kmode, p executes goUmode() to return to Umode.
+     In order for p to execute from beginning of its Umode image, with a
+     proper Umode stack:
+     
+     p's proc.usp = (int*)VA(0x100000 - 128);
+     p's proc.upc = (int*)VA(0);
+     p's proc.cpsr= p->cpsr = (int *)0x10;
+
+Q3:
+All process VA in Kmode are the SAME (0 to 258MB):
+(1). WHY? A process needs to access this preemptive, shared kernel space to interact with the operating system- we may enter kernel mode through issuance of system calls however may not directly interact with the kernel. A process has additional private, non-preemptive memory area as well.
+
+(2). How is this done? We segment a chunk of memory for pre-emptive kernel use, we map each process to its respective memory area via the page table.
+
+(3). VA 0-258MB can only be RW by process in Kmode, HOW? The MMU detects RW on the dedicated kernel space and checks if the process is in UMODE or KMODE.
+
+Each process can RW its own VA=2GB to 2G+Uimage_size, HOW? Again, the MMU is used to protect addresses outside the bounds/permissions of the underlying process.
