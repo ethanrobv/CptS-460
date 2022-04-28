@@ -6,6 +6,9 @@
 #define S_ISREG(m) ((m >> 12) == 010)
 #define S_ISLNK(m) ((m >> 12) == 012)
 
+char debug[16];
+char path[128];
+
 int ls_file(char *fname);
 int ls_dir(char *dname);
 
@@ -15,7 +18,7 @@ char *t2 = "----------------";
 int main(int argc, char *argv[ ])
 {
   int i;
-  char path[128], xname[128];
+  char xname[128];
   bzero(path, 128); bzero(xname, 128);
   
   printf("this is a ls\n");
@@ -39,6 +42,8 @@ int main(int argc, char *argv[ ])
     }
     else
     {
+      printf("xname=%s\n", xname);
+      //gets(debug);
       stat(xname, mystat_ptr);
       if (S_ISREG(mystat.st_mode))
       {
@@ -46,6 +51,9 @@ int main(int argc, char *argv[ ])
       }
       else
       {
+        bzero(path, 128);
+        strcpy(path, xname);
+        printf("path=%s\n", path);
         ls_dir(xname);
       }
     }
@@ -60,8 +68,16 @@ int ls_file(char *fname)
 {
   STAT mystat;
   STAT *mystat_ptr = &mystat;
-
-  stat(fname, mystat_ptr);
+  //gets(debug);
+  char to_stat[128];
+  bzero(to_stat, 128);
+  strcpy(to_stat, path);
+  if (to_stat[strlen(to_stat)-1] != '/')
+  {
+    strcat(to_stat, "/");
+  }
+  strcat(to_stat, fname);
+  stat(to_stat, mystat_ptr);
   if (S_ISREG(mystat.st_mode))
   {
     putc('-');
@@ -119,6 +135,8 @@ int ls_dir(char *dname)
   while (cp < 1024 + buf)
   {
     strncpy(fname, dp->name, dp->name_len);
+    printf("fname=%s\n", fname);
+    // gets(debug);
     ls_file(fname);
 
     cp += dp->rec_len;

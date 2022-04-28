@@ -190,7 +190,7 @@ typedef struct semaphore{
 
 #define NMINODES          20
 #define NMOUNT             4
-#define NFD               10
+#define NFD               20
 #define NOFT              40
 #define NPIPE             10
 #define PSIZE            128

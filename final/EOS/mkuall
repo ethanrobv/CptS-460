@@ -4,6 +4,8 @@ sudo ./mku login
 sudo ./mku sh
 sudo ./mku ls
 sudo ./mku cat
+sudo ./mku clear
+sudo ./mku more
 
 cd ..
 sudo ./mk

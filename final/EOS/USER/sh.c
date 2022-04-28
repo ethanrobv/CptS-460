@@ -161,7 +161,7 @@ int do_pipe(char *uline, int *pd)
     printf("head=%s\ntail=%s\n", head, tail);
     int lpd[2];
     pipe(lpd);
-
+    //gets(debug);
     pid = fork();
     if (pid)  // PARENT as READER on lpd
     {
@@ -275,7 +275,7 @@ int get_head_tail(char *cmdline, char *head, char *tail)
   }
   head[j] == '\0';
   j = 0;
-  for (int i = flag + 1; i < strlen(cmdline); i++)
+  for (int i = flag + 2; i < strlen(cmdline); i++)
   {
     tail[j] = cmdline[i];
     j++;
