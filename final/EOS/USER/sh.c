@@ -18,8 +18,9 @@ int main(int argc, char *argv[])
   char uline[256];
   char cmd[32];
   char args[224];
-  printf("this is sh\n");
+  //printf("this is sh\n");
 
+  
   for (i = 0; i < argc; i++)
   {
     printf("argv[%d] = %s\n", i, argv[i]);
@@ -158,7 +159,7 @@ int do_pipe(char *uline, int *pd)
 
   if (get_head_tail(uline, head, tail) > 0) // if hasPipe == true
   {
-    printf("head=%s\ntail=%s\n", head, tail);
+    //printf("head=%s\ntail=%s\n", head, tail);
     int lpd[2];
     pipe(lpd);
     //gets(debug);
@@ -246,7 +247,7 @@ int do_command(char *cmdline)
       e++;
     }
   }
-  printf("\ndo_command head=%s\n", head);
+  //printf("\ndo_command head=%s\n", head);
   head[e] = '\0';
   exec(head);
 }

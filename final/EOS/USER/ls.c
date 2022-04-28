@@ -135,7 +135,7 @@ int ls_dir(char *dname)
   while (cp < 1024 + buf)
   {
     strncpy(fname, dp->name, dp->name_len);
-    printf("fname=%s\n", fname);
+    //printf("fname=%s\n", fname);
     // gets(debug);
     ls_file(fname);
 

@@ -18,7 +18,12 @@ int main(int argc, char *argv[])
   }
   */
 
-  if (argc == 1) // we open stdin (for piping, I/O red)
+  //Look at lines 1242 - 1244 on
+  //https://github.com/util-linux/util-linux/blob/master/text-utils/more.c
+  //essentially, close(stdin), then open(tty). But first, we need to keep
+  //the OG file descriptor.
+  //**we have to give the proc kbd interrupts while this program executes**
+  if (argc == 1) // open communication with teletypewriter (for piping, I/O red)
   {
     fd = dup(0);
     close(0);
@@ -29,11 +34,12 @@ int main(int argc, char *argv[])
   else
   {
     fd = open(argv[1], O_RDONLY);
-    if (fd < 0)
-    {
-      printf("more - error: file doesn't exist.\n");
-      return -1;
-    }
+  }
+
+  if (fd < 0)
+  {
+    printf("more - error: file doesn't exist.\n");
+    return -1;
   }
 
   stat(argv[1], mystat_ptr);
@@ -52,7 +58,7 @@ int main(int argc, char *argv[])
       char c = getc();
       if (c == ' ') // if spacebar, get many lines
       {
-        while (num_lines < 40 && i < r)
+        while (num_lines < 80 && i < r)
         {
           if (buf[i] == '\r')
           {
@@ -66,7 +72,7 @@ int main(int argc, char *argv[])
       {
         while (num_lines < 1 && i < r)
         {
-          if (buf[i] == '\n' || buf[i] == '\r')
+          if (buf[i] == '\r')
           {
             num_lines++;
           }

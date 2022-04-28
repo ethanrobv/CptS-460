@@ -1,39 +1,87 @@
-/************** test.c file ***************/
+/************** cat.c file ***************/
 
 #include "ucode.c"
 
-int main(int argc, char *argv[ ])
+char debug[12];
+
+int main(int argc, char *argv[])
 {
-  int i, r;
   char buf[1024];
-  
-  //printf("this is cat\n");
-  /*
-  for (i=0; i<argc; i++){
-    printf("argv[%d] = %s\n", i, argv[i]);
-  }
-  */
+  int nbytes = 1024;
+  char tty[64];
+  char c;
+  int fd;
+  int bytes_left;
+  char n = '\n';
+  char r = '\r';
 
-  // must supply at least 1 additional argument to cat
-  if (argv == 1)
+  if (argc == 1)
   {
-    printf("cat - error: must enter some arguments.\n");
-    return 0;
+    fd = 0;
+    gettty(tty);
+    open(tty, 0);
+    while (read(fd, &c, 1) > 0)
+    {
+      write(1, &c, 1);
+
+      if (c == '\n')
+      {
+        write(2, &r, 1);
+      }
+      else if (c == '\r')
+      {
+        write(1, &n, 1);
+        write(2, &r, 1);
+      }
+    }
   }
-
-  // close stdin
-  close(0);
-  // open specified file for READ
-  open(argv[1], O_RDONLY);
-
-  while ((r = read(0, buf, 1024)) > 0)
+  else
   {
-    buf[1023] = '\0';
-    printf("%s", buf);
+
+    fd = open(argv[1], 0);
+
+    if (fd < 0)
+    {
+      printf("cat - error: bad fname arg.\n");
+      exit(-1);
+    }
+
+    STAT mystat, *mystat_ptr = &mystat;
+
+    stat(argv[1], mystat_ptr);
+
+    bytes_left = mystat.st_size;
+
+    while (bytes_left > 0)
+    {
+      if (bytes_left < 1024)
+      {
+        nbytes = bytes_left;
+      }
+
+      read(fd, buf, nbytes);
+
+      for (int i = 0; i < nbytes; i++)
+      {
+        c = buf[i];
+
+        write(1, &c, 1);
+
+        if (c == '\n')
+        {
+          write(2, &r, 1);
+        }
+        else if (c == '\r')
+        {
+          write(1, &n, 1);
+          write(2, &r, 1);
+        }
+      }
+      bytes_left -= nbytes;
+    }
+
+    close(fd);
+
+    return 1;
   }
-
-  close(argv[1]);
-  // printf("\nend of cat\n");
-
-  exit(0);
 }
