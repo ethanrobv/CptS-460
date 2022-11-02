@@ -1,1 +1,1 @@
-# ervCPTS460
+# CptS 460 Assignments - WSU
